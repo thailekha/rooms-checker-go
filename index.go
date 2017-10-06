@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 	"bufio"
-	"runtime"
+	// "runtime"
 	"os/exec"
 	"strconv"
 	s "strings"
@@ -15,10 +15,15 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+// PLAN : cater for all exit status code of curl -> a repeat mechanism
+//actually do repeat machanism and try it with code 56 first
+
 var MAX_CMDS = 200
 var cmds = 0
 
-var ROOMS = []string{"223","224","225","226","227","228","229","230","AG03","AG04","AG07","AG08","AG09","AG10","AG14","AG15","AG16","AG18","AG20","AG21","AG25","AG26","AG27","AG31","AG32","AG33","AG34","AL1","AL2","AL3","AT103","AT104","AT105","AT107","AT108","AT109","AT110","AT111","AT112","AT121","AT126","AT130","B01","B02","B03","B07","B08","B09","B09A","B10","B11","B12","B13","B15","B16","B18","B19","B20","B21","BETL","BL1","BL14","BL2","BL3","BL4","BL9","BW1","C001","C002","C003","C004","C005","C014","C07","C11","C111","C115","C204","C206","C212","C23","C24","C25","C26","C27","C28","C29","C30","C31","C32","C33","C34","C35","C38","C39","C39A","C42","C47","C48","C48A","C51","CL1","CL2","CL3","CL4","D01","D02","D04","D05","D08","D11","D12","D25","E03","E04","E07","E13","E15","E19A","E19B","ETRC1","ETRC2","ETRC3","F01","F02","F03","F04","F06","F07","F09","F20","F23","F26","F27","F28","F28A","F29","F30","FTG10","FTG11","FTG12","FTG13","FTG14","FTG15","FTG18","FTG19","FTG20","FTG22","FTG23","FTG24","FTG25","FTG29","G12","G17","G18","G19","G20","HA 06","HA 07","HA 08","HA 17","HA 18","HA 21","HA 22","IT101","IT102","IT103","IT118","IT119","IT120","IT201","IT202","IT203","IT220","IT221","IT222","ITG01","ITG02","ITG03","ITG17","ITG18","ITG19","TL114","TL116","TL120","TL121","TL128","TL129","TL157","TL158","TL159","TL221","TL225","TL228","TL235","TL236","TL238","TL244(A)","TL244(B)","TL245","TL249","TL250","TL251","TL252","W02","W03","W04","W05","W06","W07","W08","W09","W10","W11","W12","W13","W14","W18","W19","W20","W21",}
+//var NORMAL_ROOMS = []string{"223","224","225","226","227","228","229","230","AG03","AG04","AG07","AG08","AG09","AG10","AG14","AG15","AG16","AG18","AG20","AG21","AG25","AG26","AG27","AG31","AG32","AG33","AG34","AL1","AL2","AL3","AT103","AT104","AT105","AT107","AT108","AT109","AT110","AT111","AT112","AT121","AT126","AT130","B01","B02","B03","B07","B08","B09","B09A","B10","B11","B12","B13","B15","B16","B18","B19","B20","B21","BETL","BL1","BL14","BL2","BL3","BL4","BL9","BW1","C001","C002","C003","C004","C005","C014","C07","C11","C111","C115","C204","C206","C212","C23","C24","C25","C26","C27","C28","C29","C30","C31","C32","C33","C34","C35","C38","C39","C39A","C42","C47","C48","C48A","C51","CL1","CL2","CL3","CL4","D01","D02","D04","D05","D08","D11","D12","D25","E03","E04","E07","E13","E15","E19A","E19B","ETRC1","ETRC2","ETRC3","F01","F02","F03","F04","F06","F07","F09","F20","F23","F26","F27","F28","F28A","F29","F30","FTG10","FTG11","FTG12","FTG13","FTG14","FTG15","FTG18","FTG19","FTG20","FTG22","FTG23","FTG24","FTG25","FTG29","G12","G17","G18","G19","G20","HA 06","HA 07","HA 08","HA 17","HA 18","HA 21","HA 22","TL114","TL116","TL120","TL121","TL128","TL129","TL157","TL158","TL159","TL221","TL225","TL228","TL235","TL236","TL238","TL244(A)","TL244(B)","TL245","TL249","TL250","TL251","TL252","W02","W03","W04","W05","W06","W07","W08","W09","W10","W11","W12","W13","W14","W18","W19","W20","W21",}
+var NORMAL_ROOMS = []string{"C001","C002","C003","C004","C005","C014","C07","C11","C111","C115","C204","C206","C212","C23","C24","C25","C26","C27","C28","C29","C30","C31","C32","C33","C34","C35","C38","C39","C39A","C42","C47","C48","C48A","C51","CL1","CL2","CL3","CL4","D01","D02","D04","D05","D08","D11","D12","D25","E03","E04","E07","E13","E15","E19A","E19B","ETRC1","ETRC2","ETRC3","F01","F02","F03","F04","F06","F07","F09","F20","F23","F26","F27","F28","F28A","F29","F30","FTG10","FTG11","FTG12","FTG13","FTG14","FTG15","FTG18","FTG19","FTG20","FTG22","FTG23","FTG24","FTG25","FTG29","G12","G17","G18","G19","G20","TL114","TL116","TL120","TL121","TL128","TL129","TL157","TL158","TL159","TL221","TL225","TL228","TL235","TL236","TL238","TL244(A)","TL244(B)","TL245","TL249","TL250","TL251","TL252","W02","W03","W04","W05","W06","W07","W08","W09","W10","W11","W12","W13","W14","W18","W19","W20","W21",}
+var IT_ROOMS = []string{"IT101","IT102","IT103","IT118","IT119","IT120","IT201","IT202","IT203","IT220","IT221","IT222","ITG01","ITG02","ITG03","ITG17","ITG18","ITG19",}
 var MON = []int{2,3,4,5,6,7,8,9,10}
 var TUE = []int{11,12,13,14,15,16,17,18,19}
 var WED = []int{20,21,22,23,24,25,26,27,28}
@@ -59,16 +64,18 @@ func clockwise(a string, b string) bool {
 	bT, e2 := strconv.ParseInt(s.Split(b,":")[0],10,0)
 	check(e2)
 
-	return bT >= aT
+	return bT > aT
 }
 
-func lookupTime(key string) []string {
-	res := make([]string, 0)
+func lookupTime(key string, inclusive bool) []string {
 	baseTime := TIME_LOOKUP[key]
+	res := []string{baseTime}	
 
-	for _, time := range TIME_LOOKUP {
-		if clockwise(baseTime, time) {
-			res = append(res, time)
+	if inclusive {
+		for _, time := range TIME_LOOKUP {
+			if clockwise(baseTime, time) {
+				res = append(res, time)
+			}
 		}
 	}
 
@@ -90,21 +97,29 @@ func getSelector(param int) string {
 }
 
 func main() {
+	ROOMS := IT_ROOMS
 
 	//input
-	d, t := prompt()
-	day, times := DAY_LOOKUP[d], lookupTime(t)
+	d, t, inc, itOnly := prompt()
+	day, times := DAY_LOOKUP[d], lookupTime(t, inc)
 	// console.Print("day: ")
 	// console.Println(day)
 	console.Print("times: ")
 	console.Println(times)
+	if itOnly {
+		console.Println("IT rooms only")
+	} else {
+		// for _, r := range NORMAL_ROOMS {
+		// 	ROOMS = append(ROOMS, r)
+		// }
+		ROOMS = NORMAL_ROOMS
+	}
 
 	channel := make(chan []string)
 
 	//do query for each room
 	for _, room := range ROOMS {
-		go process(day, times, room, channel)
-		console.Println("Spawned " + room + ", " + strconv.Itoa(runtime.NumGoroutine()))
+		go process(day, times, room, channel)	
 	}
 
 	dataCount := 0
@@ -170,7 +185,7 @@ func getHtml(path string) io.Reader {
 	return bufio.NewReader(file)
 }
 
-func prompt() (string, string) {
+func prompt() (string, string, bool, bool) {
 	reader := bufio.NewReader(os.Stdin)
 
 	console.Println("Choose weekday:")
@@ -197,7 +212,18 @@ func prompt() (string, string) {
 
 	time, errt := reader.ReadString('\n')
 	check(errt)
-	
 
-	return s.Split(day, "\n")[0], s.Split(time, "\n")[0]
+	console.Println("Check remaining time as well? (y/n)")
+	console.Print("===> ")
+	
+	inc, errinc := reader.ReadString('\n')
+	check(errinc)
+
+	console.Println("IT rooms? (y/n)")
+	console.Print("===> ")
+	
+	it, erri := reader.ReadString('\n')
+	check(erri)
+
+	return s.Split(day, "\n")[0], s.Split(time, "\n")[0], s.Split(inc,"\n")[0] == "y" ,s.Split(it,"\n")[0] == "y"
 }
