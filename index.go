@@ -13,6 +13,9 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
+var MAX = 200
+var cmds = 0
+
 var ROOMS = []string{"IT101","IT102","IT103","IT118","IT119","IT120","IT201","IT202","IT203","IT220","IT221","IT222","ITG01","ITG02","ITG03","ITG17","ITG18","ITG19",}
 var MON = []int{2,3,4,5,6,7,8,9,10}
 var TUE = []int{11,12,13,14,15,16,17,18,19}
@@ -94,39 +97,48 @@ func main() {
 	console.Print("times: ")
 	console.Println(times)
 
+	channel := make(chan []string)
+
 	//do query for each room
 	for _, room := range ROOMS {
-		doc, err := goquery.NewDocumentFromReader(getHtml(query(room)))
-		check(err)
+		go process(day, times, room, channel)
+	}
 
-		freeTimes := make([]string,0)
+	dataCount := 0
+	for freeTimes := range channel {
+		dataCount = dataCount + 1
 
-		for index, param := range day {
-			if index > 0 { 
-				doc.Find(getSelector(param)).Each(func(i int, s *goquery.Selection) {
-					ti, mo := s.Find(TIME).Text(), s.Find(MOD).Text()
-					if contains(ti, times) && len(mo) == 2 {
-						freeTimes = append(freeTimes, ti)
-					}
-				})
-			}
-		}
-
-		if len(freeTimes) > 0 {
+		if len(freeTimes) > 1 {
 			sort.Strings(freeTimes)
-			console.Print("Room " + room +" free at: ")
 			console.Println(freeTimes)
 		}
 
-		clean(room)
+		if dataCount == len(ROOMS) {
+			close(channel)
+		}
 	}
 }
 
-func getHtml(path string) io.Reader {
-	file, err := os.Open(path)
+func process(day []int, times []string, room string, channel chan []string)  {
+	doc, err := goquery.NewDocumentFromReader(getHtml(query(room)))
 	check(err)
 
-	return bufio.NewReader(file)
+	freeTimes := []string{room}
+
+	for index, param := range day {
+		if index > 0 { 
+			doc.Find(getSelector(param)).Each(func(i int, s *goquery.Selection) {
+				ti, mo := s.Find(TIME).Text(), s.Find(MOD).Text()
+				if contains(ti, times) && len(mo) == 2 {
+					freeTimes = append(freeTimes, ti)
+				}
+			})
+		}
+	}
+
+	clean(room)
+
+	channel <- freeTimes
 }
 
 func query(room string) string {
@@ -141,6 +153,13 @@ func clean(room string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func getHtml(path string) io.Reader {
+	file, err := os.Open(path)
+	check(err)
+
+	return bufio.NewReader(file)
 }
 
 func prompt() (string, string) {
