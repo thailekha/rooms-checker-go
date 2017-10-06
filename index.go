@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"sort"
+	"time"
 	"bufio"
 	"os/exec"
 	"strconv"
@@ -13,7 +14,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-var MAX = 200
+var MAX_CMDS = 5
 var cmds = 0
 
 var ROOMS = []string{"IT101","IT102","IT103","IT118","IT119","IT120","IT201","IT202","IT203","IT220","IT221","IT222","ITG01","ITG02","ITG03","ITG17","ITG18","ITG19",}
@@ -106,6 +107,7 @@ func main() {
 
 	dataCount := 0
 	for freeTimes := range channel {
+		cmds = cmds - 2
 		dataCount = dataCount + 1
 
 		if len(freeTimes) > 1 {
@@ -120,6 +122,12 @@ func main() {
 }
 
 func process(day []int, times []string, room string, channel chan []string)  {
+	for cmds >= MAX_CMDS {
+		time.Sleep(70 * time.Millisecond)
+	}
+
+	cmds = cmds + 2
+
 	doc, err := goquery.NewDocumentFromReader(getHtml(query(room)))
 	check(err)
 
