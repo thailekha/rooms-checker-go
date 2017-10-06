@@ -195,9 +195,7 @@ func prompt() (string, string, bool, bool) {
 	console.Println("4) Thursdday ")
 	console.Println("5) Friday ")
 	console.Print("===> ")
-
-	day, errd := reader.ReadString('\n')
-	check(errd)
+	day := nextLine(reader)
 
 	console.Println("Choose time:")
 	console.Println("1) 09:15 ")
@@ -209,21 +207,21 @@ func prompt() (string, string, bool, bool) {
 	console.Println("7) 15:15 ")
 	console.Println("8) 16:15 ")
 	console.Print("===> ")
-
-	time, errt := reader.ReadString('\n')
-	check(errt)
+	time := nextLine(reader)
 
 	console.Println("Check remaining time as well? (y/n)")
 	console.Print("===> ")
-	
-	inc, errinc := reader.ReadString('\n')
-	check(errinc)
+	inc := nextLine(reader)
 
 	console.Println("IT rooms? (y/n)")
-	console.Print("===> ")
-	
-	it, erri := reader.ReadString('\n')
-	check(erri)
+	console.Print("===> ")	
+	it := nextLine(reader)
 
-	return s.Split(day, "\n")[0], s.Split(time, "\n")[0], s.Split(inc,"\n")[0] == "y" ,s.Split(it,"\n")[0] == "y"
+	return day, time, inc == "y", it == "y"
+}
+
+func nextLine(reader *bufio.Reader) string {
+	nl, err := reader.ReadString('\n')
+	check(err)
+	return s.Split(nl, "\n")[0]
 }
