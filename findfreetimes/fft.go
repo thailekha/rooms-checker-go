@@ -18,7 +18,7 @@ import (
 
 // PLAN : cater for all exit status code of curl -> make a wrapper around os exec
 // profile for which takes most time
-
+var htmlFilesPath = "null"
 var maxCmds = 200
 var cmds = 0
 var tolerableCurlErrorCodes = map[string]string{"35": "SSL connect error. The SSL handshaking failed.", "55": "Failed sending network data.", "56": "Failure in receiving network data."}
@@ -196,7 +196,7 @@ func process(day []int, times []string, room string, channel chan []string) {
 func query(room string) string {
 	for true {
 		// run Curl
-		_, err := exec.Command("./curlroom.sh", []string{room}...).CombinedOutput()
+		_, err := exec.Command("./curlroom.sh", []string{room, htmlFilesPath}...).CombinedOutput()
 
 		if err != nil {
 			errParts := s.Split(string(err.Error()), " ")
@@ -217,12 +217,12 @@ func query(room string) string {
 }
 
 func clean() {
-	_, err := exec.Command("./clean.sh").CombinedOutput()
+	_, err := exec.Command("./clean.sh", []string{htmlFilesPath}...).CombinedOutput()
 	check(err)
 }
 
 func getHtml(path string) io.Reader {
-	file, err := os.Open(path)
+	file, err := os.Open(htmlFilesPath + "/" + path)
 	check(err)
 
 	return bufio.NewReader(file)
