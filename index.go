@@ -15,8 +15,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// PLAN : cater for all exit status code of curl -> a repeat mechanism
-//actually do repeat machanism and try it with code 56 first
+// PLAN : cater for all exit status code of curl -> make a wrapper around os exec
+// profile for which takes most time
 
 var MAX_CMDS = 200
 var cmds = 0
@@ -51,6 +51,18 @@ var TIME_LOOKUP = map[string]string {
 
 var TIME = "td:nth-child(1) > small"
 var MOD = "td:nth-child(2) > small"
+
+var tolerableCurlErrorCodes = map[string]string{"35": "SSL connect error. The SSL handshaking failed.", "55": "Failed sending network data.", "56": "Failure in receiving network data."}
+
+func isTolerableCurlErrorCode(code string) bool {
+	//check if the status code is in the list of tolerable Curl Error Codes
+	for k, _ := range tolerableCurlErrorCodes {
+		if code == k {
+			return true
+		}
+	}
+	return false
+}
 
 func check(e error) {
 	if e != nil {
@@ -127,6 +139,8 @@ func main() {
 		cmds = cmds - 1
 		dataCount = dataCount + 1
 
+		//console.Println(strconv.Itoa(len(ROOMS) - dataCount) + " rooms left")
+
 		if len(freeTimes) > 1 {
 			sort.Strings(freeTimes)
 			console.Println(freeTimes)
@@ -166,8 +180,24 @@ func process(day []int, times []string, room string, channel chan []string)  {
 }
 
 func query(room string) string {
-	_, err := exec.Command("./curlroom.sh", []string{room}...).CombinedOutput()
-	check(err)
+	for true {
+		// run Curl
+		_, err := exec.Command("./curlroom.sh", []string{room}...).CombinedOutput()
+
+		if err != nil {
+			errParts := s.Split(string(err.Error()), " ")
+			if len(errParts) == 3 && errParts[0] == "exit" && errParts[1] == "status" && isTolerableCurlErrorCode(errParts[2]) {
+				//hit either code 55 or 56, the network is probably busy
+				console.Println(tolerableCurlErrorCodes[errParts[2]] + ", retrying ...")
+				time.Sleep(10 * time.Millisecond)
+			} else {
+				// neither code 55 nor 56, breaks the program
+				log.Fatal(err)
+			}
+		} else {
+			break
+		}
+	}
 
 	return room + ".html"
 }
@@ -175,7 +205,6 @@ func query(room string) string {
 func clean() {
 	_, err := exec.Command("./clean.sh").CombinedOutput()
 	check(err)
-	
 }
 
 func getHtml(path string) io.Reader {
