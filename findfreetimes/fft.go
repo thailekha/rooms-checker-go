@@ -35,20 +35,20 @@ var friRows = []int{38, 39, 40, 41, 42, 43, 44, 45, 46}
 var timeSelector = "td:nth-child(1) > small"
 var moduleSelector = "td:nth-child(2) > small"
 
-func getRows(weekday string) []int {
+func getRows(weekday string) ([]int, error) {
 	switch weekday {
 	case "monday":
-		return monRows
+		return monRows, nil
 	case "tuesday":
-		return tueRows
+		return tueRows, nil
 	case "wednesday":
-		return wedRows
+		return wedRows, nil
 	case "thursday":
-		return thuRows
+		return thuRows, nil
 	case "friday":
-		return friRows
+		return friRows, nil
 	default:
-		return nil
+		return nil, ers.New("Invalid weekday")
 	}
 }
 
@@ -77,13 +77,17 @@ func clockwise(a string, b string) bool {
 	return bT > aT
 }
 
-func validTime(time string) bool {
-	for _, t := range supportedTimes {
+func contains(time string, times []string) bool {
+	for _, t := range times {
 		if t == time {
 			return true
 		}
 	}
 	return false
+}
+
+func validTime(time string) bool {
+	return contains(time, supportedTimes)
 }
 
 func getTimes(startTime string, endTime string) ([]string, error) {
@@ -95,7 +99,7 @@ func getTimes(startTime string, endTime string) ([]string, error) {
 
 	for _, t := range supportedTimes {
 		if clockwise(startTime, t) {
-			append(times, t)
+			times = append(times, t)
 		}
 
 		if t == endTime {
@@ -111,19 +115,29 @@ func getSelector(param int) string {
 }
 
 func Find(weekday string, startTime string, endTime string, itOnly bool) (string, error) {
-	ROOMS := IT_ROOMS
+	roomsToFind := itRooms
 
 	if itOnly {
 		console.Println("IT rooms only")
 	} else {
-		ROOMS = NORMAL_ROOMS
+		roomsToFind = rooms
 	}
 
 	channel := make(chan []string)
 
+	day, dayErr := getRows(weekday)
+	if dayErr != nil {
+		return "", dayErr
+	}
+
+	times, timesErr := getTimes(startTime, endTime)
+	if timesErr != nil {
+		return "", timesErr
+	}
+
 	//do query for each room
-	for _, room := range ROOMS {
-		go process(getRows(weekday), getTimes(startTime, endTime), room, channel)
+	for _, room := range roomsToFind {
+		go process(day, times, room, channel)
 	}
 
 	result := ""
@@ -133,21 +147,24 @@ func Find(weekday string, startTime string, endTime string, itOnly bool) (string
 		cmds = cmds - 1
 		dataCount = dataCount + 1
 
-		//console.Println(strconv.Itoa(len(ROOMS) - dataCount) + " rooms left")
+		//console.Println(strconv.Itoa(len(roomsToFind) - dataCount) + " rooms left")
 
 		if len(freeTimes) > 1 {
 			sort.Strings(freeTimes)
 			console.Println(freeTimes)
-			result = result + string(freeTimes)
+			for _, ft := range freeTimes {
+				result = result + ft
+			}
+			result = result + "\n"
 		}
 
-		if dataCount == len(ROOMS) {
+		if dataCount == len(roomsToFind) {
 			clean()
 			close(channel)
 		}
 	}
 
-	return result
+	return result, nil
 }
 
 func process(day []int, times []string, room string, channel chan []string) {
@@ -165,7 +182,7 @@ func process(day []int, times []string, room string, channel chan []string) {
 	for index, param := range day {
 		if index > 0 {
 			doc.Find(getSelector(param)).Each(func(i int, s *goquery.Selection) {
-				ti, mo := s.Find(TIME).Text(), s.Find(MOD).Text()
+				ti, mo := s.Find(timeSelector).Text(), s.Find(moduleSelector).Text()
 				if contains(ti, times) && len(mo) == 2 {
 					freeTimes = append(freeTimes, ti)
 				}
