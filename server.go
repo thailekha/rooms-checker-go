@@ -1,7 +1,7 @@
 package main
 
 import (
-	fft "./findfreetimes"
+	fft "./api"
 	"fmt"
 	"github.com/go-chi/chi"
 	cors "github.com/go-chi/cors"
@@ -55,14 +55,14 @@ func checkFreeTimes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	freeTimes, fftErr := fft.Find(data.Weekday, data.StartTime, data.EndTime, true)
+	roomTimes, fftErr := fft.Find(data.Weekday, data.StartTime, data.EndTime, true)
 
 	if fftErr != nil {
 		render.Render(w, r, ErrFFT(fftErr))
 		return
 	}
 
-	render.Render(w, r, NewFreeTimesResponse(freeTimes))
+	render.Render(w, r, NewFreeTimesResponse(roomTimes))
 }
 
 //============================
@@ -97,14 +97,17 @@ func ErrInvalidRequest(err error) render.Renderer {
 //============================
 
 type FreeTimesResponse struct {
-	FreeTimes string
+	freeTimes []fft.RoomTimes
 }
 
-func NewFreeTimesResponse(freeTimes string) *FreeTimesResponse {
-	return &FreeTimesResponse{FreeTimes: freeTimes}
+func NewFreeTimesResponse(roomTimes []fft.RoomTimes) *FreeTimesResponse {
+	return &FreeTimesResponse{roomTimes}
 }
 
 func (ft *FreeTimesResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	for _, rts := range ft.freeTimes {
+		fft.PrintRTS(rts)
+	}
 	return nil
 }
 
