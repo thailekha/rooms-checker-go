@@ -4,6 +4,7 @@ import (
 	fft "./findfreetimes"
 	"fmt"
 	"github.com/go-chi/chi"
+	cors "github.com/go-chi/cors"
 	"github.com/go-chi/docgen"
 	"github.com/go-chi/render"
 	"net/http"
@@ -18,6 +19,19 @@ func print(s string) {
 
 func main() {
 	r := chi.NewRouter()
+
+	cors := cors.New(cors.Options{
+		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
+		AllowedOrigins: []string{"*"},
+		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300, // Maximum value not ignored by any of major browsers
+	})
+	r.Use(cors.Handler)
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("welcome"))
 	})
@@ -33,6 +47,8 @@ func main() {
 }
 
 func checkFreeTimes(w http.ResponseWriter, r *http.Request) {
+	print("PING")
+
 	data := &FreeTimesRequest{}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
