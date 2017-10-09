@@ -47,8 +47,6 @@ func main() {
 }
 
 func checkFreeTimes(w http.ResponseWriter, r *http.Request) {
-	print("PING")
-
 	data := &FreeTimesRequest{}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
