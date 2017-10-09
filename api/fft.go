@@ -38,13 +38,13 @@ var timeSelector = "td:nth-child(1) > small"
 var moduleSelector = "td:nth-child(2) > small"
 
 type RoomTimes struct {
-	room  string
-	times []string
+	Room  string   `json:"room"`
+	Times []string `json:"times"`
 }
 
 func PrintRTS(rts RoomTimes) {
-	console.Println(rts.room)
-	for _, t := range rts.times {
+	console.Println(rts.Room)
+	for _, t := range rts.Times {
 		console.Println(t)
 	}
 }
@@ -163,9 +163,9 @@ func Find(weekday string, startTime string, endTime string, itOnly bool) ([]Room
 
 		//console.Println(strconv.Itoa(len(roomsToFind) - dataCount) + " rooms left")
 
-		if len(roomTimes.times) > 0 {
-			sort.Strings(roomTimes.times)
-			console.Println(roomTimes.times)
+		if len(roomTimes.Times) > 0 {
+			sort.Strings(roomTimes.Times)
+			console.Println(roomTimes.Times)
 			result = append(result, roomTimes)
 		}
 

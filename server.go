@@ -97,7 +97,7 @@ func ErrInvalidRequest(err error) render.Renderer {
 //============================
 
 type FreeTimesResponse struct {
-	freeTimes []fft.RoomTimes
+	FreeTimes []fft.RoomTimes `json:"freeTimes"` //when this is encoded in json it will have key freeTimes instead of FreeTimes
 }
 
 func NewFreeTimesResponse(roomTimes []fft.RoomTimes) *FreeTimesResponse {
@@ -105,9 +105,7 @@ func NewFreeTimesResponse(roomTimes []fft.RoomTimes) *FreeTimesResponse {
 }
 
 func (ft *FreeTimesResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	for _, rts := range ft.freeTimes {
-		fft.PrintRTS(rts)
-	}
+	//preconfigure before encoding to json
 	return nil
 }
 
