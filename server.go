@@ -1,13 +1,16 @@
 package main
 
 import (
-	fft "./api"
 	"fmt"
+	"net/http"
+
+	fft "./api"
+	auth "github.com/auth0-community/go-auth0"
 	"github.com/go-chi/chi"
 	cors "github.com/go-chi/cors"
 	"github.com/go-chi/docgen"
 	"github.com/go-chi/render"
-	"net/http"
+	"gopkg.in/square/go-jose.v2"
 )
 
 // weekday, start time, end time
@@ -32,8 +35,15 @@ func main() {
 	})
 	r.Use(cors.Handler)
 
+	validator := getValidator()
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
+		validToken := validateTokenInRequest(validator, r)
+		if validToken {
+			w.Write([]byte("welcome"))
+		} else {
+			w.Write([]byte("not welcomed"))
+		}
 	})
 
 	r.Route("/api", func(r chi.Router) {
@@ -44,6 +54,24 @@ func main() {
 
 	print("Listening at 3000")
 	http.ListenAndServe(":3000", r)
+}
+
+func getValidator() *auth.JWTValidator {
+	client := auth.NewJWKClient(auth.JWKClientOptions{URI: "https://thailekha.auth0.com/.well-known/jwks.json"})
+	audience := "fKww8G6jE08WDtMRg2nYRfMOCkXQqZp0" //client id
+	configuration := auth.NewConfiguration(client, []string{audience}, "https://thailekha.auth0.com/", jose.RS256)
+	return auth.NewValidator(configuration)
+}
+
+func validateTokenInRequest(validator *auth.JWTValidator, r *http.Request) bool {
+	token, err := validator.ValidateRequest(r)
+
+	if err != nil {
+		fmt.Println(err)
+		fmt.Println("Token is not valid:", token)
+		return false
+	}
+	return true
 }
 
 func checkFreeTimes(w http.ResponseWriter, r *http.Request) {
