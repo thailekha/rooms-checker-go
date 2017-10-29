@@ -16,14 +16,79 @@ import (
 // weekday, start time, end time
 // weekday, start time, end time, list of rooms
 
-func print(s string) {
-	fmt.Println(s)
-}
+var validator *auth.JWTValidator
 
 func main() {
+	validator = getValidator()
+
 	r := chi.NewRouter()
 
-	cors := cors.New(cors.Options{
+	r.Use(getCors().Handler)
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("welcome"))
+	})
+
+	r.Route("/api/public", func(r chi.Router) {
+		r.Get("/rooms", getAllRooms)
+	})
+
+	r.Route("/api/private", func(r chi.Router) {
+		r.Use(JwtMiddleware(validator))
+		r.Post("/freetimes", checkFreeTimes)
+	})
+
+	fmt.Println(docgen.JSONRoutesDoc(r))
+
+	fmt.Println("Listening at 3000")
+	http.ListenAndServe(":3000", r)
+}
+
+//==============================
+// endpoints (start)
+//==============================
+
+func checkFreeTimes(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Token validated")
+
+	data := &FreeTimesRequest{}
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrInvalidRequest(err))
+		return
+	}
+
+	roomTimes, fftErr := fft.Find(data.Weekday, data.StartTime, data.EndTime, data.Rooms)
+
+	if fftErr != nil {
+		render.Render(w, r, ErrFFT(fftErr))
+		return
+	}
+
+	fmt.Println("Done fetching, responding to client ...")
+	render.Render(w, r, NewFreeTimesResponse(roomTimes))
+}
+
+func getAllRooms(w http.ResponseWriter, r *http.Request) {
+	render.Render(w, r, NewAllRoomsResponse(fft.GetAllRooms()))
+}
+
+//==============================
+// endpoints (end)
+//==============================
+
+//==============================
+// middleware configs (start)
+//==============================
+
+func getValidator() *auth.JWTValidator {
+	client := auth.NewJWKClient(auth.JWKClientOptions{URI: "https://thailekha.auth0.com/.well-known/jwks.json"})
+	audience := "http://localhost:3000"
+	configuration := auth.NewConfiguration(client, []string{audience}, "https://thailekha.auth0.com/", jose.RS256)
+	return auth.NewValidator(configuration)
+}
+
+func getCors() *cors.Cors {
+	return cors.New(cors.Options{
 		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
 		AllowedOrigins: []string{"*"},
 		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
@@ -33,63 +98,32 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	})
-	r.Use(cors.Handler)
+}
 
-	validator := getValidator()
+/**
+ * Input: JWTValidator, Output a func that receives a http.Handler and returns a http.Handler
+ */
+func JwtMiddleware(validator *auth.JWTValidator) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println(r)
+			token, err := validator.ValidateRequest(r)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		validToken := validateTokenInRequest(validator, r)
-		if validToken {
-			w.Write([]byte("welcome"))
-		} else {
-			w.Write([]byte("not welcomed"))
+			if err != nil {
+				fmt.Println(err)
+				fmt.Println("Token is not valid:", token)
+				render.Render(w, r, ErrUnauthorizedRequest(err))
+				return
+			}
+			next.ServeHTTP(w, r)
 		}
-	})
-
-	r.Route("/api", func(r chi.Router) {
-		r.Post("/freetimes", checkFreeTimes)
-	})
-
-	print(docgen.JSONRoutesDoc(r))
-
-	print("Listening at 3000")
-	http.ListenAndServe(":3000", r)
-}
-
-func getValidator() *auth.JWTValidator {
-	client := auth.NewJWKClient(auth.JWKClientOptions{URI: "https://thailekha.auth0.com/.well-known/jwks.json"})
-	audience := "fKww8G6jE08WDtMRg2nYRfMOCkXQqZp0" //client id
-	configuration := auth.NewConfiguration(client, []string{audience}, "https://thailekha.auth0.com/", jose.RS256)
-	return auth.NewValidator(configuration)
-}
-
-func validateTokenInRequest(validator *auth.JWTValidator, r *http.Request) bool {
-	token, err := validator.ValidateRequest(r)
-
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Token is not valid:", token)
-		return false
+		return http.HandlerFunc(fn)
 	}
-	return true
 }
 
-func checkFreeTimes(w http.ResponseWriter, r *http.Request) {
-	data := &FreeTimesRequest{}
-	if err := render.Bind(r, data); err != nil {
-		render.Render(w, r, ErrInvalidRequest(err))
-		return
-	}
-
-	roomTimes, fftErr := fft.Find(data.Weekday, data.StartTime, data.EndTime, true)
-
-	if fftErr != nil {
-		render.Render(w, r, ErrFFT(fftErr))
-		return
-	}
-
-	render.Render(w, r, NewFreeTimesResponse(roomTimes))
-}
+//==============================
+// middleware configs (end)
+//==============================
 
 //============================
 // Request related (start)
@@ -99,9 +133,17 @@ type FreeTimesRequest struct {
 	Weekday   string
 	StartTime string
 	EndTime   string
+	Rooms     []string
+}
+
+type AllRoomsRequest struct {
 }
 
 func (f *FreeTimesRequest) Bind(r *http.Request) error {
+	return nil
+}
+
+func (f *AllRoomsRequest) Bind(r *http.Request) error {
 	return nil
 }
 
@@ -110,6 +152,15 @@ func ErrInvalidRequest(err error) render.Renderer {
 		Err:            err,
 		HTTPStatusCode: 400,
 		StatusText:     "Invalid request.",
+		ErrorText:      err.Error(),
+	}
+}
+
+func ErrUnauthorizedRequest(err error) render.Renderer {
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: 403,
+		StatusText:     "Unauthorized request.",
 		ErrorText:      err.Error(),
 	}
 }
@@ -123,14 +174,27 @@ func ErrInvalidRequest(err error) render.Renderer {
 //============================
 
 type FreeTimesResponse struct {
-	FreeTimes []fft.RoomTimes `json:"freeTimes"` //when this is encoded in json it will have key freeTimes instead of FreeTimes
+	Rooms []fft.RoomTimes `json:"rooms"` //when this is encoded in json it will have key freeTimes instead of FreeTimes
+}
+
+type AllRoomsResponse struct {
+	Rooms []string `json:"rooms"` //when this is encoded in json it will have key freeTimes instead of FreeTimes
 }
 
 func NewFreeTimesResponse(roomTimes []fft.RoomTimes) *FreeTimesResponse {
 	return &FreeTimesResponse{roomTimes}
 }
 
+func NewAllRoomsResponse(rooms []string) *AllRoomsResponse {
+	return &AllRoomsResponse{rooms}
+}
+
 func (ft *FreeTimesResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	//preconfigure before encoding to json
+	return nil
+}
+
+func (al *AllRoomsResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	//preconfigure before encoding to json
 	return nil
 }
@@ -160,4 +224,12 @@ func ErrFFT(err error) render.Renderer {
 
 //============================
 // Response related (end)
+//============================
+
+//============================
+// Helpers (start)
+//============================
+
+//============================
+// Helpers (end)
 //============================
