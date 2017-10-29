@@ -24,11 +24,7 @@ var cmds = 0
 var tolerableCurlErrorCodes = map[string]string{"6": "Couldn't resolve host. The given remote host was not resolved", "35": "SSL connect error. The SSL handshaking failed.", "55": "Failed sending network data.", "56": "Failure in receiving network data."}
 
 //var NORMAL_ROOMS = []string{"223","224","225","226","227","228","229","230","AG03","AG04","AG07","AG08","AG09","AG10","AG14","AG15","AG16","AG18","AG20","AG21","AG25","AG26","AG27","AG31","AG32","AG33","AG34","AL1","AL2","AL3","AT103","AT104","AT105","AT107","AT108","AT109","AT110","AT111","AT112","AT121","AT126","AT130","B01","B02","B03","B07","B08","B09","B09A","B10","B11","B12","B13","B15","B16","B18","B19","B20","B21","BETL","BL1","BL14","BL2","BL3","BL4","BL9","BW1","C001","C002","C003","C004","C005","C014","C07","C11","C111","C115","C204","C206","C212","C23","C24","C25","C26","C27","C28","C29","C30","C31","C32","C33","C34","C35","C38","C39","C39A","C42","C47","C48","C48A","C51","CL1","CL2","CL3","CL4","D01","D02","D04","D05","D08","D11","D12","D25","E03","E04","E07","E13","E15","E19A","E19B","ETRC1","ETRC2","ETRC3","F01","F02","F03","F04","F06","F07","F09","F20","F23","F26","F27","F28","F28A","F29","F30","FTG10","FTG11","FTG12","FTG13","FTG14","FTG15","FTG18","FTG19","FTG20","FTG22","FTG23","FTG24","FTG25","FTG29","G12","G17","G18","G19","G20","HA 06","HA 07","HA 08","HA 17","HA 18","HA 21","HA 22","TL114","TL116","TL120","TL121","TL128","TL129","TL157","TL158","TL159","TL221","TL225","TL228","TL235","TL236","TL238","TL244(A)","TL244(B)","TL245","TL249","TL250","TL251","TL252","W02","W03","W04","W05","W06","W07","W08","W09","W10","W11","W12","W13","W14","W18","W19","W20","W21",}
-var rooms = []string{"C001", "C002", "C003", "C004", "C005", "C014", "C07", "C11", "C111", "C115", "C204", "C206", "C212", "C23", "C24", "C25", "C26", "C27", "C28", "C29", "C30", "C31", "C32", "C33", "C34", "C35", "C38", "C39", "C39A", "C42", "C47", "C48", "C48A", "C51", "CL1", "CL2", "CL3", "CL4", "D01", "D02", "D04", "D05", "D08", "D11", "D12", "D25", "E03", "E04", "E07", "E13", "E15", "E19A", "E19B", "ETRC1", "ETRC2", "ETRC3", "F01", "F02", "F03", "F04", "F06", "F07", "F09", "F20", "F23", "F26", "F27", "F28", "F28A", "F29", "F30", "FTG10", "FTG11", "FTG12", "FTG13", "FTG14", "FTG15", "FTG18", "FTG19", "FTG20", "FTG22", "FTG23", "FTG24", "FTG25", "FTG29", "G12", "G17", "G18", "G19", "G20", "TL114", "TL116", "TL120", "TL121", "TL128", "TL129", "TL157", "TL158", "TL159", "TL221", "TL225", "TL228", "TL235", "TL236", "TL238", "TL244(A)", "TL244(B)", "TL245", "TL249", "TL250", "TL251", "TL252", "W02", "W03", "W04", "W05", "W06", "W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W18", "W19", "W20", "W21"}
-
-var itRooms = []string{"IT101", "IT102", "IT103", "IT118", "IT119", "IT120", "IT201", "IT202", "IT203", "IT220", "IT221", "IT222", "ITG01", "ITG02", "ITG03", "ITG17", "ITG18", "ITG19"}
-
-//var itRooms = []string{"IT118"}
+var rooms = []string{"C001", "C002", "C003", "C004", "C005", "C014", "C07", "C11", "C111", "C115", "C204", "C206", "C212", "C23", "C24", "C25", "C26", "C27", "C28", "C29", "C30", "C31", "C32", "C33", "C34", "C35", "C38", "C39", "C39A", "C42", "C47", "C48", "C48A", "C51", "CL1", "CL2", "CL3", "CL4", "D01", "D02", "D04", "D05", "D08", "D11", "D12", "D25", "E03", "E04", "E07", "E13", "E15", "E19A", "E19B", "ETRC1", "ETRC2", "ETRC3", "F01", "F02", "F03", "F04", "F06", "F07", "F09", "F20", "F23", "F26", "F27", "F28", "F28A", "F29", "F30", "FTG10", "FTG11", "FTG12", "FTG13", "FTG14", "FTG15", "FTG18", "FTG19", "FTG20", "FTG22", "FTG23", "FTG24", "FTG25", "FTG29", "G12", "G17", "G18", "G19", "G20", "TL114", "TL116", "TL120", "TL121", "TL128", "TL129", "TL157", "TL158", "TL159", "TL221", "TL225", "TL228", "TL235", "TL236", "TL238", "TL244(A)", "TL244(B)", "TL245", "TL249", "TL250", "TL251", "TL252", "W02", "W03", "W04", "W05", "W06", "W07", "W08", "W09", "W10", "W11", "W12", "W13", "W14", "W18", "W19", "W20", "W21", "IT101", "IT102", "IT103", "IT118", "IT119", "IT120", "IT201", "IT202", "IT203", "IT220", "IT221", "IT222", "ITG01", "ITG02", "ITG03", "ITG17", "ITG18", "ITG19"}
 var supportedTimes = []string{"9:15", "10:15", "11:15", "12:15", "13:15", "14:15", "15:15", "16:15"}
 var monRows = []int{2, 3, 4, 5, 6, 7, 8, 9, 10}
 var tueRows = []int{11, 12, 13, 14, 15, 16, 17, 18, 19}
@@ -36,7 +32,9 @@ var wedRows = []int{20, 21, 22, 23, 24, 25, 26, 27, 28}
 var thuRows = []int{29, 30, 31, 32, 33, 34, 35, 36, 37}
 var friRows = []int{38, 39, 40, 41, 42, 43, 44, 45, 46}
 var timeSelector = "td:nth-child(1) > small"
-var moduleSelector = "td:nth-child(2) > small"
+var moduleSelector = "td:nth-child(2) > small > small"
+
+// var lecturerSelector = "td:nth-child(7) > small > small"
 
 type RoomTimes struct {
 	Room  string   `json:"room"`
@@ -129,15 +127,11 @@ func getSelector(param int) string {
 	return "#divTT > table:nth-child(2) > tbody > tr:nth-child(" + strconv.Itoa(param) + ")"
 }
 
-func Find(weekday string, startTime string, endTime string, itOnly bool) ([]RoomTimes, error) {
-	roomsToFind := itRooms
+func GetAllRooms() []string {
+	return rooms
+}
 
-	if itOnly {
-		console.Println("IT rooms only")
-	} else {
-		roomsToFind = rooms
-	}
-
+func Find(weekday string, startTime string, endTime string, roomsToFind []string) ([]RoomTimes, error) {
 	channel := make(chan RoomTimes)
 
 	day, dayErr := getRows(weekday)
