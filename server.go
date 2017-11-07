@@ -1,16 +1,18 @@
 package main
 
 import (
+	e "errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	fft "./api"
 	auth "github.com/auth0-community/go-auth0"
 	"github.com/go-chi/chi"
 	cors "github.com/go-chi/cors"
-	"github.com/go-chi/docgen"
 	"github.com/go-chi/render"
 	"gopkg.in/square/go-jose.v2"
+	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 // weekday, start time, end time
@@ -25,22 +27,20 @@ func main() {
 
 	r.Use(getCors().Handler)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
-	})
-
 	r.Route("/api/public", func(r chi.Router) {
 		r.Get("/rooms", getAllRooms)
 	})
 
 	r.Route("/api/private", func(r chi.Router) {
-		r.Use(JwtMiddleware(validator))
+		r.Use(validateJwtToken(validator))
 		r.Post("/freetimes", checkFreeTimes)
 	})
 
-	fmt.Println(docgen.JSONRoutesDoc(r))
+	r.Route("/api/limitedprivate", func(r chi.Router) {
+		r.Use(validateJwtTokenAndScope(validator))
+		r.Get("/history", getHistory)
+	})
 
-	fmt.Println("Listening at 3000")
 	http.ListenAndServe(":3000", r)
 }
 
@@ -48,9 +48,18 @@ func main() {
 // endpoints (start)
 //==============================
 
-func checkFreeTimes(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Token validated")
+// GET /api/public/rooms
+func getAllRooms(w http.ResponseWriter, r *http.Request) {
+	render.Render(w, r, NewAllRoomsResponse(fft.GetAllRooms()))
+}
 
+// GET /api/limitedprivate/history
+func getHistory(w http.ResponseWriter, r *http.Request) {
+	render.Render(w, r, NewHistoryResponse(fft.GetHistory()))
+}
+
+// POST /api/private/freetimes
+func checkFreeTimes(w http.ResponseWriter, r *http.Request) {
 	data := &FreeTimesRequest{}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, ErrInvalidRequest(err))
@@ -64,12 +73,7 @@ func checkFreeTimes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("Done fetching, responding to client ...")
 	render.Render(w, r, NewFreeTimesResponse(roomTimes))
-}
-
-func getAllRooms(w http.ResponseWriter, r *http.Request) {
-	render.Render(w, r, NewAllRoomsResponse(fft.GetAllRooms()))
 }
 
 //==============================
@@ -103,22 +107,53 @@ func getCors() *cors.Cors {
 /**
  * Input: JWTValidator, Output a func that receives a http.Handler and returns a http.Handler
  */
-func JwtMiddleware(validator *auth.JWTValidator) func(next http.Handler) http.Handler {
+func validateJwtToken(validator *auth.JWTValidator) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			fmt.Println(r)
-			token, err := validator.ValidateRequest(r)
+			_, err := validator.ValidateRequest(r)
 
 			if err != nil {
-				fmt.Println(err)
-				fmt.Println("Token is not valid:", token)
 				render.Render(w, r, ErrUnauthorizedRequest(err))
 				return
 			}
+
 			next.ServeHTTP(w, r)
 		}
 		return http.HandlerFunc(fn)
 	}
+}
+
+func validateJwtTokenAndScope(validator *auth.JWTValidator) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
+			token, err := validator.ValidateRequest(r)
+
+			if err != nil {
+				render.Render(w, r, ErrUnauthorizedRequest(err))
+				return
+			}
+
+			if !hasSufficientScope(r, validator, token) {
+				render.Render(w, r, ErrInsufficientScopeRequest(e.New("You do not have the read:history scope.")))
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		}
+		return http.HandlerFunc(fn)
+	}
+}
+
+// https://auth0.com/docs/quickstart/backend/golang/01-authorization
+func hasSufficientScope(r *http.Request, validator *auth.JWTValidator, token *jwt.JSONWebToken) bool {
+	claims := map[string]interface{}{}
+	err := validator.Claims(r, token, &claims)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return err == nil && strings.Contains(claims["scope"].(string), "read:history")
 }
 
 //==============================
@@ -136,14 +171,7 @@ type FreeTimesRequest struct {
 	Rooms     []string
 }
 
-type AllRoomsRequest struct {
-}
-
 func (f *FreeTimesRequest) Bind(r *http.Request) error {
-	return nil
-}
-
-func (f *AllRoomsRequest) Bind(r *http.Request) error {
 	return nil
 }
 
@@ -165,6 +193,15 @@ func ErrUnauthorizedRequest(err error) render.Renderer {
 	}
 }
 
+func ErrInsufficientScopeRequest(err error) render.Renderer {
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: 401,
+		StatusText:     "Insufficient scope",
+		ErrorText:      err.Error(),
+	}
+}
+
 //============================
 // Request related (end)
 //============================
@@ -181,6 +218,10 @@ type AllRoomsResponse struct {
 	Rooms []string `json:"rooms"` //when this is encoded in json it will have key freeTimes instead of FreeTimes
 }
 
+type HistoryResponse struct {
+	History string `json:"history"` //when this is encoded in json it will have key freeTimes instead of FreeTimes
+}
+
 func NewFreeTimesResponse(roomTimes []fft.RoomTimes) *FreeTimesResponse {
 	return &FreeTimesResponse{roomTimes}
 }
@@ -189,12 +230,21 @@ func NewAllRoomsResponse(rooms []string) *AllRoomsResponse {
 	return &AllRoomsResponse{rooms}
 }
 
+func NewHistoryResponse(history string) *HistoryResponse {
+	return &HistoryResponse{history}
+}
+
 func (ft *FreeTimesResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	//preconfigure before encoding to json
 	return nil
 }
 
 func (al *AllRoomsResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	//preconfigure before encoding to json
+	return nil
+}
+
+func (h *HistoryResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	//preconfigure before encoding to json
 	return nil
 }
