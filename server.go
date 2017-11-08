@@ -15,9 +15,6 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
-// weekday, start time, end time
-// weekday, start time, end time, list of rooms
-
 var validator *auth.JWTValidator
 
 func main() {
@@ -93,9 +90,7 @@ func getValidator() *auth.JWTValidator {
 
 func getCors() *cors.Cors {
 	return cors.New(cors.Options{
-		// AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
-		AllowedOrigins: []string{"*"},
-		// AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -211,15 +206,15 @@ func ErrInsufficientScopeRequest(err error) render.Renderer {
 //============================
 
 type FreeTimesResponse struct {
-	Rooms []fft.RoomTimes `json:"rooms"` //when this is encoded in json it will have key freeTimes instead of FreeTimes
+	Rooms []fft.RoomTimes `json:"rooms"`
 }
 
 type AllRoomsResponse struct {
-	Rooms []string `json:"rooms"` //when this is encoded in json it will have key freeTimes instead of FreeTimes
+	Rooms []string `json:"rooms"`
 }
 
 type HistoryResponse struct {
-	History string `json:"history"` //when this is encoded in json it will have key freeTimes instead of FreeTimes
+	History string `json:"history"`
 }
 
 func NewFreeTimesResponse(roomTimes []fft.RoomTimes) *FreeTimesResponse {
@@ -235,17 +230,14 @@ func NewHistoryResponse(history string) *HistoryResponse {
 }
 
 func (ft *FreeTimesResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	//preconfigure before encoding to json
 	return nil
 }
 
 func (al *AllRoomsResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	//preconfigure before encoding to json
 	return nil
 }
 
 func (h *HistoryResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	//preconfigure before encoding to json
 	return nil
 }
 

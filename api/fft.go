@@ -16,8 +16,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// PLAN : cater for all exit status code of curl -> make a wrapper around os exec
-// profile for which takes most time
 var htmlFilesPath = "null"
 var maxCmds = 200
 var cmds = 0
@@ -168,8 +166,6 @@ func Find(weekday string, startTime string, endTime string, roomsToFind []string
 		cmds = cmds - 1
 		dataCount = dataCount + 1
 
-		//console.Println(strconv.Itoa(len(roomsToFind) - dataCount) + " rooms left")
-
 		if len(roomTimes.Times) > 0 {
 			sort.Strings(roomTimes.Times)
 			PrintRTS(roomTimes)
@@ -245,9 +241,3 @@ func getHtml(path string) io.Reader {
 
 	return bufio.NewReader(file)
 }
-
-// func nextLine(reader *bufio.Reader) string {
-// 	nl, err := reader.ReadString('\n')
-// 	check(err)
-// 	return s.Split(nl, "\n")[0]
-// }
