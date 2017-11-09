@@ -2,6 +2,7 @@ package auth0
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -98,6 +99,10 @@ func (v *JWTValidator) ValidateRequest(r *http.Request) (*jwt.JSONWebToken, erro
 	}
 
 	expected := v.config.expectedClaims.WithTime(time.Now())
+
+	fmt.Println("@\n@\n@")
+	fmt.Println(expected)
+
 	err = claims.Validate(expected)
 	return token, err
 }

@@ -92,7 +92,7 @@ func checkFreeTimes(w http.ResponseWriter, r *http.Request) {
 
 func getValidator() *auth.JWTValidator {
 	client := auth.NewJWKClient(auth.JWKClientOptions{URI: "https://thailekha.auth0.com/.well-known/jwks.json"})
-	audience := "https://rooms-checker-go.herokuapp.com"
+	audience := "https://rooms-checker-go.herokuapp.com/"
 	configuration := auth.NewConfiguration(client, []string{audience}, "https://thailekha.auth0.com/", jose.RS256)
 	return auth.NewValidator(configuration)
 }
