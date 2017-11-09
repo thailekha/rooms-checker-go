@@ -1,0 +1,103 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "HeAOIQS+TI75+Afm0qgKXdg+37I=",
+			"path": "github.com/PuerkitoBio/goquery",
+			"revision": "63e7f870c2298e42bfc8b200db92e175a3e71120",
+			"revisionTime": "2017-09-29T10:56:09Z"
+		},
+		{
+			"checksumSHA1": "2rWSos1D+xqNSGkvEMOG3pntod8=",
+			"path": "github.com/andybalholm/cascadia",
+			"revision": "349dd0209470eabd9514242c688c403c0926d266",
+			"revisionTime": "2016-12-24T14:14:13Z"
+		},
+		{
+			"checksumSHA1": "a1rETqBPTbC1KGnDTft0ymufurk=",
+			"path": "github.com/auth0-community/go-auth0",
+			"revision": "3de339a55934c49fa256181e63b9ecf0234c15b7",
+			"revisionTime": "2017-08-15T10:36:13Z"
+		},
+		{
+			"checksumSHA1": "dN2HlHLVa8Lq8O6WoXxz9wFLoZI=",
+			"path": "github.com/go-chi/chi",
+			"revision": "d0a764c1cfa8b66387b699ebc694691bb3665b03",
+			"revisionTime": "2017-10-06T07:04:20Z"
+		},
+		{
+			"checksumSHA1": "r/8uaoEFx3XAL2U2MJ3xmgJ78qo=",
+			"path": "github.com/go-chi/cors",
+			"revision": "dba6525398619dead495962a916728e7ee2ca322",
+			"revisionTime": "2017-08-02T15:05:10Z"
+		},
+		{
+			"checksumSHA1": "KlhjFlnkWjrgYdOiUCgD+uuiCRU=",
+			"path": "github.com/go-chi/render",
+			"revision": "9f855fadd4b8cde7773f9ef51f6b2705af239519",
+			"revisionTime": "2017-07-06T22:11:03Z"
+		},
+		{
+			"checksumSHA1": "SUYEFYVLIO7x9+EBKlDv0QPe4CU=",
+			"path": "github.com/go-errors/errors",
+			"revision": "8fa88b06e5974e97fbf9899a7f86a344bfd1f105",
+			"revisionTime": "2016-12-05T22:32:45Z"
+		},
+		{
+			"checksumSHA1": "VNCu6otT6WNT3/OdYcHDlsflvYM=",
+			"path": "github.com/thailekha/findfreetimes",
+			"revision": "8433b6f418af7cc7ef2c19b0d0ff111c30d381da",
+			"revisionTime": "2017-11-09T12:26:57Z"
+		},
+		{
+			"checksumSHA1": "X6Q8nYb+KXh+64AKHwWOOcyijHQ=",
+			"path": "golang.org/x/crypto/ed25519",
+			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"revisionTime": "2017-09-30T17:45:11Z"
+		},
+		{
+			"checksumSHA1": "LXFcVx8I587SnWmKycSDEq9yvK8=",
+			"path": "golang.org/x/crypto/ed25519/internal/edwards25519",
+			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"revisionTime": "2017-09-30T17:45:11Z"
+		},
+		{
+			"checksumSHA1": "/PGQlVbw8jILX3tLQaYAg6bTAFI=",
+			"path": "golang.org/x/net/html",
+			"revision": "a04bdaca5b32abe1c069418fb7088ae607de5bd0",
+			"revisionTime": "2017-10-03T05:09:24Z"
+		},
+		{
+			"checksumSHA1": "iWvOOLdDxvI4AVX6px6/HYBPeaQ=",
+			"path": "golang.org/x/net/html/atom",
+			"revision": "a04bdaca5b32abe1c069418fb7088ae607de5bd0",
+			"revisionTime": "2017-10-03T05:09:24Z"
+		},
+		{
+			"checksumSHA1": "Qq9iBb+/Hjnydxe0Ait/ouqX7yE=",
+			"path": "gopkg.in/square/go-jose.v2",
+			"revision": "f8f38de21b4dcd69d0413faf231983f5fd6634b1",
+			"revisionTime": "2017-09-13T18:28:36Z"
+		},
+		{
+			"checksumSHA1": "Ho5sr2GbiR8S35IRni7vC54d5Js=",
+			"path": "gopkg.in/square/go-jose.v2/cipher",
+			"revision": "f8f38de21b4dcd69d0413faf231983f5fd6634b1",
+			"revisionTime": "2017-09-13T18:28:36Z"
+		},
+		{
+			"checksumSHA1": "JFun0lWY9eqd80Js2iWsehu1gc4=",
+			"path": "gopkg.in/square/go-jose.v2/json",
+			"revision": "f8f38de21b4dcd69d0413faf231983f5fd6634b1",
+			"revisionTime": "2017-09-13T18:28:36Z"
+		},
+		{
+			"checksumSHA1": "36YSMA8/CXxaomaM6bXrq1Gt7Rs=",
+			"path": "gopkg.in/square/go-jose.v2/jwt",
+			"revision": "f8f38de21b4dcd69d0413faf231983f5fd6634b1",
+			"revisionTime": "2017-09-13T18:28:36Z"
+		}
+	],
+	"rootPath": "github.com/thailekha/rooms-checker-go"
+}
