@@ -3,21 +3,30 @@ package main
 import (
 	e "errors"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 
-	fft "./api"
 	auth "github.com/auth0-community/go-auth0"
 	"github.com/go-chi/chi"
 	cors "github.com/go-chi/cors"
 	"github.com/go-chi/render"
+	fft "github.com/thailekha/findfreetimes"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 var validator *auth.JWTValidator
+var port string
 
 func main() {
+	port = os.Getenv("PORT")
+
+	if port == "" {
+		log.Fatal("$PORT must be set")
+	}
+
 	validator = getValidator()
 
 	r := chi.NewRouter()
@@ -38,7 +47,7 @@ func main() {
 		r.Get("/history", getHistory)
 	})
 
-	http.ListenAndServe(":3000", r)
+	http.ListenAndServe(":"+port, r)
 }
 
 //==============================
@@ -83,7 +92,7 @@ func checkFreeTimes(w http.ResponseWriter, r *http.Request) {
 
 func getValidator() *auth.JWTValidator {
 	client := auth.NewJWKClient(auth.JWKClientOptions{URI: "https://thailekha.auth0.com/.well-known/jwks.json"})
-	audience := "http://localhost:3000"
+	audience := "https://rooms-checker-go.herokuapp.com"
 	configuration := auth.NewConfiguration(client, []string{audience}, "https://thailekha.auth0.com/", jose.RS256)
 	return auth.NewValidator(configuration)
 }
