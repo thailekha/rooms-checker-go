@@ -2,6 +2,7 @@ package findfreetimes
 
 import (
 	"bufio"
+	"bytes"
 	ers "errors"
 	console "fmt"
 	"io"
@@ -16,7 +17,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-var htmlFilesPath = "null"
+var htmlFilesPath = "/app/null"
 var maxCmds = 200
 var cmds = 0
 var tolerableCurlErrorCodes = map[string]string{"6": "Couldn't resolve host. The given remote host was not resolved", "35": "SSL connect error. The SSL handshaking failed.", "55": "Failed sending network data.", "56": "Failure in receiving network data."}
@@ -210,9 +211,18 @@ func process(day []int, times []string, room string, channel chan RoomTimes) {
 func query(room string) string {
 	for true {
 		// run Curl
-		_, err := exec.Command("./curlroom.sh", []string{room, htmlFilesPath}...).CombinedOutput()
+		console.Println("run curl")
+
+		cmd := exec.Command("/bin/bash", []string{"/app/curlroom.sh", room, htmlFilesPath}...)
+
+		var out bytes.Buffer
+		var stderr bytes.Buffer
+		cmd.Stdout = &out
+		cmd.Stderr = &stderr
+		err := cmd.Run()
 
 		if err != nil {
+			console.Println(console.Sprint(err) + ": " + stderr.String())
 			errParts := s.Split(string(err.Error()), " ")
 			if len(errParts) == 3 && errParts[0] == "exit" && errParts[1] == "status" && isTolerableCurlErrorCode(errParts[2]) {
 				//hit either code 55 or 56, the network is probably busy
@@ -231,11 +241,13 @@ func query(room string) string {
 }
 
 func clean() {
-	_, err := exec.Command("./clean.sh", []string{htmlFilesPath}...).CombinedOutput()
+	console.Println("run clean")
+	_, err := exec.Command("/bin/bash", []string{"/app/clean.sh", htmlFilesPath}...).CombinedOutput()
 	check(err)
 }
 
 func getHtml(path string) io.Reader {
+	console.Println("get html")
 	file, err := os.Open(htmlFilesPath + "/" + path)
 	check(err)
 

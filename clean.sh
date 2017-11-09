@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-rm "./$1/"*.html
+rm "$1/"*.html
